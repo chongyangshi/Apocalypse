@@ -41,6 +41,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
     public static final String HUMAN_FILE = "images/human.png";
     public static final String DESTINATION_FILE = "images/destination.png";
     public static final String VACANT_FILE = "images/vacant.png";
+    public static final String ALERT_ZONE_FILE = "images/alert.png";
     
     public static final int BOARD_WIDTH = 10;
     public static final int BOARD_HEIGHT = 10;
@@ -49,6 +50,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
     static ImageIcon humanImage = new ImageIcon(HUMAN_FILE);
     static ImageIcon destinationImage = new ImageIcon(DESTINATION_FILE);
     static ImageIcon vacantImage = new ImageIcon(VACANT_FILE);
+    static ImageIcon alertImage = new ImageIcon(ALERT_ZONE_FILE);
     
     private int[][] gameBoard;
     private JPanel CenterPanel;
@@ -101,15 +103,17 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         // TOP PANEL, series of button using FlowLayout
         topPanelA = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 10));
         topPanelA.setBackground(Color.RED);
-        JTextArea TopPanelAMessage = new JTextArea("Zombies are flooding the city, the military has given up retaliation.\nYou must find your way towards the extraction point with arrow keys. Avoid the undead!");
+        JTextArea TopPanelAMessage = new JTextArea("Zombies are flooding the city, the military has given up retaliation."
+                + "\nYou must find your way towards the extraction point with arrow keys. Avoid the undead!"
+                + "\nYellow areas represent zombies' line of sight. Avoid them if you can");
         TopPanelAMessage.setBackground(Color.red);
         topPanelA.add(TopPanelAMessage);
         
         // CENTER PANEL, main game map grid.
-        CenterPanel = new JPanel(new GridLayout(10,10,0,0));
+        CenterPanel = new JPanel(new GridLayout(BOARD_WIDTH,BOARD_HEIGHT,0,0));
         gameBoard = new int[BOARD_WIDTH][BOARD_HEIGHT];
         
-        //Gameboard Encoding: 0 = vacant, 1 = zombie, 2 = human, 3 = destination, 4 = stepping in will alert the zombie
+        //Gameboard Encoding: 0 = vacant, 1 = zombie, 2 = human, 3 = destination, 4,5 = zombieA and zombie B's alert zone
         for(int i=0; i<gameBoard.length; i++){
             for(int j=0; j<gameBoard.length; j++){
                 gameBoard[i][j] = 0;
@@ -124,10 +128,10 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         gameBoard[gameBoard.length-1][humanLocationX] = 2;
         gameBoard[0][destinationX] = 3;
         
-        zombieALocationX = randomInt.nextInt(4-0+1)+0;
-        zombieALocationY = randomInt.nextInt(7-2+1)+2;
-        zombieBLocationX = randomInt.nextInt(9-5+1)+5;
-        zombieBLocationY = randomInt.nextInt(7-2+1)+2;
+        zombieALocationX = randomInt.nextInt((BOARD_WIDTH/2-1)-0+1)+0;
+        zombieALocationY = randomInt.nextInt((BOARD_HEIGHT-3)-2+1)+2;
+        zombieBLocationX = randomInt.nextInt((BOARD_WIDTH-1)-(BOARD_WIDTH/2)+1)+(BOARD_WIDTH/2);
+        zombieBLocationY = randomInt.nextInt((BOARD_HEIGHT-3)-2+1)+2;
         gameBoard[zombieALocationY][zombieALocationX] = 1;
         gameBoard[zombieBLocationY][zombieBLocationX] = 1;
         updateBoard();
@@ -149,7 +153,10 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         for(int i=0; i<gameBoard.length; i++){
             for(int j=0; j<gameBoard.length; j++){
                 JLabel addedImage = new JLabel(vacantImage);
-                if (gameBoard[i][j] == 3) {
+                if (gameBoard[i][j] == 4 || gameBoard[i][j] == 5) {
+                    addedImage = new JLabel(alertImage);
+                }
+                else if (gameBoard[i][j] == 3) {
                     addedImage = new JLabel(destinationImage);
                 }
                 else if (gameBoard[i][j] == 2) {
@@ -192,8 +199,20 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         
         if (zombieAAlert == false) {
             
+            //Remove previous alert zones
+            for (int i = 0; i<BOARD_HEIGHT; i++) {
+                if (gameBoard[i][zombieALocationX] == 1 || gameBoard[i][zombieALocationX] == 4 || gameBoard[i][zombieALocationX] == 5) {
+                    gameBoard[i][zombieALocationX] = 0;
+                }
+            }
+            for (int i = 0; i<BOARD_WIDTH; i++) {
+                if (gameBoard[zombieALocationY][i] == 1 || gameBoard[zombieALocationY][i] == 4 || gameBoard[zombieALocationY][i] == 5) {
+                    gameBoard[zombieALocationY][i] = 0;
+                }
+            }
+            
             //In case human moved to zombie's old location.
-            if (gameBoard[zombieALocationY][zombieALocationX] == 1) {
+            if (gameBoard[zombieALocationY][zombieALocationX] == 1 || gameBoard[zombieALocationY][zombieALocationX] == 4 || gameBoard[zombieALocationY][zombieALocationX] == 5) {
                 gameBoard[zombieALocationY][zombieALocationX] = 0;
             }
             
@@ -226,18 +245,106 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
                 }
             }
             gameBoard[zombieALocationY][zombieALocationX] = 1;
+            //Add alert zones
+            for (int i = 0; i<BOARD_HEIGHT; i++) {
+                if (gameBoard[i][zombieALocationX] == 0) {
+                    gameBoard[i][zombieALocationX] = 4;
+                }
+            }
+            for (int i = 0; i<BOARD_WIDTH; i++) {
+                if (gameBoard[zombieALocationY][i] == 0) {
+                    gameBoard[zombieALocationY][i] = 4;
+                }
+            }
             
         }
         else {
-            //TODO: add alerted moving decisions
-            System.out.println("A Alerted");
+
+            //Remove previous alert zones
+            for (int i = 0; i<BOARD_HEIGHT; i++) {
+                if (gameBoard[i][zombieALocationX] == 1 || gameBoard[i][zombieALocationX] == 4 || gameBoard[zombieALocationX][i] == 5) {
+                    gameBoard[i][zombieALocationX] = 0;
+                }
+            }
+            for (int i = 0; i<BOARD_WIDTH; i++) {
+                if (gameBoard[zombieALocationY][i] == 1 || gameBoard[zombieALocationY][i] == 4 || gameBoard[zombieALocationY][i] == 5) {
+                    gameBoard[zombieALocationY][i] = 0;
+                }
+            }
+            
+            //In case human moved to zombie's old location.
+            if (gameBoard[zombieALocationY][zombieALocationX] == 1 || gameBoard[zombieALocationY][zombieALocationX] == 4 || gameBoard[zombieALocationY][zombieALocationX] == 5) {
+                gameBoard[zombieALocationY][zombieALocationX] = 0;
+            }
+            
+            //Test and make move decision
+            if (humanLocationX == zombieALocationX) {
+                //if human and zombie on the same vertical plane
+                if (humanLocationY > zombieALocationY) {
+                    if (moveValidatorAlerted(zombieALocationX, zombieALocationY+2) == true) {
+                        zombieALocationY+=2;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieALocationX, zombieALocationY+1) == true) {
+                        zombieALocationY+=1;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                }
+                else if (humanLocationY < zombieALocationY) {
+                    if (moveValidatorAlerted(zombieALocationX, zombieALocationY-2) == true) {
+                        zombieALocationY-=2;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieALocationX, zombieALocationY-1) == true) {
+                        zombieALocationY-=1;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                }
+            }
+            
+            
+            if (humanLocationY == zombieALocationY) {
+                //if human and zombie on the same horizontal plane
+                if (humanLocationX > zombieALocationX) {
+                    if (moveValidatorAlerted(zombieALocationX+2, zombieALocationY) == true) {
+                        zombieALocationX+=2;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieALocationX+1, zombieALocationY) == true) {
+                        zombieALocationX+=1;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                }
+                else if (humanLocationX < zombieALocationX) {
+                    if (moveValidatorAlerted(zombieALocationX-2, zombieALocationY) == true) {
+                        zombieALocationX-=2;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieALocationX-1, zombieALocationY) == true) {
+                        zombieALocationX-=1;
+                        gameBoard[zombieALocationY][zombieALocationX] = 1;
+                    }
+                }
+            }
         }
         
         if (zombieBAlert == false) {
             
             //In case human moved to zombie's old location.
-            if (gameBoard[zombieBLocationY][zombieBLocationX] == 1) {
+            if (gameBoard[zombieBLocationY][zombieBLocationX] == 1 || gameBoard[zombieBLocationY][zombieBLocationX] == 4 || gameBoard[zombieBLocationY][zombieBLocationX] == 5) {
                 gameBoard[zombieBLocationY][zombieBLocationX] = 0;
+            }
+            
+            //Remove previous alert zones
+            for (int i = 0; i<BOARD_HEIGHT; i++) {
+                if (gameBoard[i][zombieBLocationX] == 1 || gameBoard[i][zombieBLocationX] == 4 || gameBoard[i][zombieBLocationX] == 5) {
+                    gameBoard[i][zombieBLocationX] = 0;
+                }
+            }
+            for (int i = 0; i<BOARD_WIDTH; i++) {
+                if (gameBoard[zombieBLocationY][i] == 1 || gameBoard[zombieBLocationY][i] == 4 || gameBoard[zombieBLocationY][i] == 5) {
+                    gameBoard[zombieBLocationY][i] = 0;
+                }
             }
             
             boolean[] moveArray = moveValidator(zombieBLocationX, zombieBLocationY);
@@ -270,11 +377,91 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
                 }
             }
             gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+            //Add alert zones
+            for (int i = 0; i<BOARD_HEIGHT; i++) {
+                if (gameBoard[i][zombieBLocationX] == 0) {
+                    gameBoard[i][zombieBLocationX] = 5;
+                }
+            }
+            for (int i = 0; i<BOARD_WIDTH; i++) {
+                if (gameBoard[zombieBLocationY][i] == 0) {
+                    gameBoard[zombieBLocationY][i] = 5;
+                }
+            }
         }
+        
         else {
-            //TODO: add alerted moving decisions
-            System.out.println("B Alerted");
+            //Remove previous alert zones
+            for (int i = 0; i<BOARD_HEIGHT; i++) {
+                if (gameBoard[i][zombieBLocationX] == 1 || gameBoard[i][zombieBLocationX] == 4 || gameBoard[i][zombieBLocationX] == 5) {
+                    gameBoard[i][zombieBLocationX] = 0;
+                }
+            }
+            for (int i = 0; i<BOARD_WIDTH; i++) {
+                if (gameBoard[zombieBLocationY][i] == 1 || gameBoard[zombieBLocationY][i] == 4 || gameBoard[zombieBLocationY][i] == 5) {
+                    gameBoard[zombieBLocationY][i] = 0;
+                }
+            }
+            
+            //In case human moved to zombie's old location.
+            if (gameBoard[zombieBLocationY][zombieBLocationX] == 1 || gameBoard[zombieBLocationY][zombieBLocationX] == 4 || gameBoard[zombieBLocationY][zombieBLocationX] == 5) {
+                gameBoard[zombieBLocationY][zombieBLocationX] = 0;
+            }
+            
+            //Test and make move decision
+            if (humanLocationX == zombieBLocationX) {
+                //if human and zombie on the same vertical plane
+                if (humanLocationY > zombieBLocationY) {
+                    if (moveValidatorAlerted(zombieBLocationX, zombieBLocationY+2) == true) {
+                        zombieBLocationY+=2;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieBLocationX, zombieBLocationY+1) == true) {
+                        zombieBLocationY+=1;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                }
+                else if (humanLocationY < zombieBLocationY) {
+                    if (moveValidatorAlerted(zombieBLocationX, zombieBLocationY-2) == true) {
+                        zombieBLocationY-=2;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieBLocationX, zombieBLocationY-1) == true) {
+                        zombieBLocationY-=1;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                }
+            }
+            
+            
+            if (humanLocationY == zombieBLocationY) {
+                //if human and zombie on the same horizontal plane
+                if (humanLocationX > zombieBLocationX) {
+                    if (moveValidatorAlerted(zombieBLocationX+2, zombieBLocationY) == true) {
+                        zombieBLocationX+=2;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieBLocationX+1, zombieBLocationY) == true) {
+                        zombieBLocationX+=1;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                }
+                else if (humanLocationX < zombieBLocationX) {
+                    if (moveValidatorAlerted(zombieBLocationX-2, zombieBLocationY) == true) {
+                        zombieBLocationX-=2;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                    else if (moveValidatorAlerted(zombieBLocationX-1, zombieBLocationY) == true) {
+                        zombieBLocationX-=1;
+                        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
+                    }
+                }
+            }
         }
+        
+        //Safeguarding code, prevent zombies from disappearing.
+        gameBoard[zombieALocationY][zombieALocationX] = 1;
+        gameBoard[zombieBLocationY][zombieBLocationX] = 1;
     }
     
     public boolean[] moveValidator(int x, int y) {
@@ -293,7 +480,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
             validMoveArray[0] = canMoveUp;
         }
         
-        if (y<9) {
+        if (y<(BOARD_HEIGHT-1)) {
             if ((gameBoard[y+1][x] != 1) & (gameBoard[y+1][x] != 3)){
                 boolean canMoveDown = true;
                 validMoveArray[1] = canMoveDown;
@@ -315,7 +502,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
             validMoveArray[2] = canMoveLeft;
         }
         
-        if (x<9) {
+        if (x<(BOARD_WIDTH-1)) {
             if ((gameBoard[y][x+1] != 1) & (gameBoard[y][x+1] != 3)) {
                 boolean canMoveRight = true;
                 validMoveArray[3] = canMoveRight;
@@ -328,11 +515,22 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         return validMoveArray;
     }
     
+    public boolean moveValidatorAlerted(int x, int y) {
+        //Check if a zombie can move to a proposed destination on alerted state.
+        if (x>=0 & x<=BOARD_WIDTH & y>=0 & y<=BOARD_HEIGHT) {
+            return true;
+        }
+        else {
+            return false;
+        }
+        
+    }
+    
     public void winning(){
         //Display player winning message, end the game.
         playerWon = true;
         topPanelA.removeAll();
-        JTextArea TopPanelMessage = new JTextArea("Congratulations, you have escaped the undead and reached the extraction point!");
+        JTextArea TopPanelMessage = new JTextArea("Congratulations, you have escaped the undead and reached the extraction point!\n\n\n");
         topPanelA.setBackground(Color.GREEN);
         TopPanelMessage.setBackground(Color.GREEN);
         topPanelA.add(TopPanelMessage);
@@ -344,7 +542,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         //Display player losing message, end the game.
         playerLost = true;
         topPanelA.removeAll();
-        JTextArea TopPanelMessage = new JTextArea("Unfortunately zombies caught you! You are lost.");
+        JTextArea TopPanelMessage = new JTextArea("Unfortunately zombies caught you! You are lost.\n\n\n");
         topPanelA.setBackground(Color.RED);
         TopPanelMessage.setBackground(Color.RED);
         topPanelA.add(TopPanelMessage);
@@ -352,6 +550,59 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         topPanelA.updateUI();
     }
     
+    public void zombieAlertCheck(int x, int y) {
+        //Check if zombies are alerted
+        
+        if (gameBoard[y][x] == 4) {
+            zombieAAlert = true;
+            topPanelA.removeAll();
+            JTextArea TopPanelMessage = new JTextArea("You walked into one of the zombies' line of sight,\n"
+                    + " the zombie becomes actived!\n It will now move faster.\n");
+            topPanelA.setBackground(Color.RED);
+            TopPanelMessage.setBackground(Color.RED);
+            topPanelA.add(TopPanelMessage);
+            topPanelA.repaint();
+            topPanelA.updateUI();
+        }
+        else {
+            zombieAAlert = false;
+            if (zombieBAlert == false) {
+                topPanelA.removeAll();
+                JTextArea TopPanelMessage = new JTextArea("Zombies are calm.\n\n\n");
+                topPanelA.setBackground(Color.YELLOW);
+                TopPanelMessage.setBackground(Color.YELLOW);
+                topPanelA.add(TopPanelMessage);
+                topPanelA.repaint();
+                topPanelA.updateUI();
+            }
+        }
+        
+        if (gameBoard[y][x] == 5) {
+            zombieBAlert = true;
+            topPanelA.removeAll();
+            JTextArea TopPanelMessage = new JTextArea("You walked into one of the zombies' line of sight,\n"
+                    + " the zombie becomes actived!\n It will now move faster.\n");
+            topPanelA.setBackground(Color.RED);
+            TopPanelMessage.setBackground(Color.RED);
+            topPanelA.add(TopPanelMessage);
+            topPanelA.repaint();
+            topPanelA.updateUI();
+        }
+        else {
+            zombieBAlert = false;
+            if (zombieAAlert == false) {
+                topPanelA.removeAll();
+                JTextArea TopPanelMessage = new JTextArea("Zombies are calm.\n\n\n");
+                topPanelA.setBackground(Color.YELLOW);
+                TopPanelMessage.setBackground(Color.YELLOW);
+                topPanelA.add(TopPanelMessage);
+                topPanelA.repaint();
+                topPanelA.updateUI();
+            }
+        }
+    }
+    
+    //Method of Key and Action Listeners
     @Override
     public void keyPressed(KeyEvent e) {
         
@@ -361,6 +612,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
             if (humanLocationY > 0 & playerWon == false & playerLost == false) {
                 gameBoard[humanLocationY][humanLocationX] = 0;
                 humanLocationY -= 1;
+                zombieAlertCheck(humanLocationX, humanLocationY);
                 gameBoard[humanLocationY][humanLocationX] = 2;
                 updateBoard();
             }
@@ -369,6 +621,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
             if (humanLocationY < 9 & playerWon == false & playerLost == false) {
                 gameBoard[humanLocationY][humanLocationX] = 0;
                 humanLocationY += 1;
+                zombieAlertCheck(humanLocationX, humanLocationY);
                 gameBoard[humanLocationY][humanLocationX] = 2;
                 updateBoard();
             }
@@ -377,6 +630,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
             if (humanLocationX > 0 & playerWon == false & playerLost == false) {
                 gameBoard[humanLocationY][humanLocationX] = 0;
                 humanLocationX -= 1;
+                zombieAlertCheck(humanLocationX, humanLocationY);
                 gameBoard[humanLocationY][humanLocationX] = 2;
                 updateBoard();
             }
@@ -385,6 +639,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
             if (humanLocationX < 9 & playerWon == false & playerLost == false) {
                 gameBoard[humanLocationY][humanLocationX] = 0;
                 humanLocationX += 1;
+                zombieAlertCheck(humanLocationX, humanLocationY);
                 gameBoard[humanLocationY][humanLocationX] = 2;
                 updateBoard();
             }
@@ -401,15 +656,18 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         }
     }
     
-    
     @Override
     public void keyReleased(KeyEvent e) {
+        //pass
     }
     
     @Override
     public void keyTyped(KeyEvent e) {
+        //pass
     }
     
+    
+    //utility functions
     public static boolean areAllFalse(boolean[] array){
         //shortcut to check if all elements in an array is false
         for(boolean b : array) if(b) return false;
@@ -446,6 +704,7 @@ public class MainAppLayout extends JFrame implements KeyListener, ActionListener
         buttomPanel.updateUI();
     }
     
+    //Main
     /**
      * @param args
      */

@@ -12,7 +12,8 @@
 hs_err_pid*
 
 # Netbeans Project information
-ndproject/
+dist/images/
+nbproject/
 build/
 build.xml
 manifest.mf

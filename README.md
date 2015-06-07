@@ -3,6 +3,8 @@ Apocalypse
 ####Apocalypse is a simple zombie survival puzzle game.
 
 ###How To Play 
+Run **dist/Apocalypse.jar** to execute game binary.
+
 Move your human (green) to the extraction point (grey), and dodge the zombies (red). Avoid zombies' line of sight (yellow) if you can. If a zombie becomes alerted, it will more faster. Although a zombie might jump over you when alerted in point blank range, so you can use it to your advantage.
 
 ###Code

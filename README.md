@@ -8,9 +8,7 @@ Run **dist/Apocalypse.jar** to execute game binary.
 Move your human (green) to the extraction point (grey), and dodge the zombies (red). Avoid zombies' line of sight (yellow) if you can. If a zombie becomes alerted, it will more faster. Although a zombie might jump over you when alerted in point blank range, so you can use it to your advantage.
 
 ###Code
-Code is written for a random workshop, by someone who basically hates Java.
-
-Therefore, the code might be terrible since I can't write logic and OOP properly at 3 a.m.
+Code is still in a primal and loosely-prepared state, it was written for a workshop that did not run for its full duration. We will attempt to finalise it in the future. At the moment, proceed with caution.
 
 ###License
 MIT Licensed. For license, see **LICENSE** file.
